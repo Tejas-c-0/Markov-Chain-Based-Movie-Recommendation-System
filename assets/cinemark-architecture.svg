@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="700" viewBox="0 0 1400 700" role="img" aria-labelledby="title desc">
+<title id="title">CineMark recommendation system architecture</title>
+<desc id="desc">A dark premium diagram showing movie catalogue and feedback entering a cleaning stage, branching into popularity and TF-IDF recommenders, then evaluation metrics, with a separate synthetic-only Markov chain branch.</desc>
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#080d1d"/><stop offset=".55" stop-color="#11142c"/><stop offset="1" stop-color="#1c1035"/></linearGradient>
+ <linearGradient id="pink" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f472b6"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient>
+ <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#22d3ee"/><stop offset="1" stop-color="#3b82f6"/></linearGradient>
+ <linearGradient id="green" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#34d399"/><stop offset="1" stop-color="#0d9488"/></linearGradient>
+ <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fde047"/><stop offset="1" stop-color="#f97316"/></linearGradient>
+ <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%"><feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#020617" flood-opacity=".55"/></filter>
+ <pattern id="grid" width="36" height="36" patternUnits="userSpaceOnUse"><path d="M36 0H0V36" fill="none" stroke="#94a3b8" stroke-opacity=".07" stroke-width="1"/></pattern>
+ <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#94a3b8"/></marker>
+ <marker id="arrowGold" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#fbbf24"/></marker>
+</defs>
+<rect width="1400" height="700" rx="28" fill="url(#bg)"/><rect width="1400" height="700" rx="28" fill="url(#grid)"/>
+<circle cx="1260" cy="80" r="170" fill="#7c3aed" opacity=".10"/><circle cx="90" cy="620" r="190" fill="#06b6d4" opacity=".08"/>
+<text x="70" y="76" fill="#f8fafc" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="38" font-weight="800">CINEMARK <tspan fill="#c4b5fd">/ SYSTEM MAP</tspan></text>
+<text x="72" y="111" fill="#a5b4fc" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="17" letter-spacing="2">RECOMMENDATION PIPELINE · RESEARCH PROTOTYPE</text>
+<!-- input cards -->
+<g filter="url(#shadow)"><rect x="70" y="170" width="220" height="105" rx="18" fill="#101f43" stroke="#60a5fa" stroke-width="1.5"/><path d="M70 188Q70 170 88 170H272Q290 170 290 188V194H70Z" fill="url(#cyan)"/><text x="94" y="225" fill="#f8fafc" font-family="Inter,Arial" font-size="19" font-weight="700">Movie catalogue</text><text x="94" y="251" fill="#bfdbfe" font-family="Inter,Arial" font-size="14">CSV · metadata</text></g>
+<g filter="url(#shadow)"><rect x="70" y="310" width="220" height="105" rx="18" fill="#251747" stroke="#c084fc" stroke-width="1.5"/><path d="M70 328Q70 310 88 310H272Q290 310 290 328V334H70Z" fill="url(#pink)"/><text x="94" y="365" fill="#f8fafc" font-family="Inter,Arial" font-size="19" font-weight="700">User feedback</text><text x="94" y="391" fill="#e9d5ff" font-family="Inter,Arial" font-size="14">JSON Lines · labels</text></g>
+<!-- clean -->
+<path d="M290 220H340V278H365" stroke="#94a3b8" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/><path d="M290 362H340V310H365" stroke="#94a3b8" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<g filter="url(#shadow)"><rect x="375" y="230" width="220" height="130" rx="20" fill="#073b3a" stroke="#2dd4bf" stroke-width="1.5"/><path d="M395 230H575Q595 230 595 250V255H375V250Q375 230 395 230Z" fill="url(#green)"/><text x="400" y="287" fill="#ecfeff" font-family="Inter,Arial" font-size="19" font-weight="700">Clean &amp; match</text><text x="400" y="315" fill="#99f6e4" font-family="Inter,Arial" font-size="14">Validate IDs and labels</text><text x="400" y="337" fill="#99f6e4" font-family="Inter,Arial" font-size="14">Remove invalid pairs</text></g>
+<path d="M595 295H640V205H675" stroke="#94a3b8" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/><path d="M640 295V405H675" stroke="#94a3b8" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<!-- models -->
+<g filter="url(#shadow)"><rect x="685" y="150" width="235" height="110" rx="18" fill="#422006" stroke="#fb923c" stroke-width="1.5"/><path d="M703 150H902Q920 150 920 168V174H685V168Q685 150 703 150Z" fill="url(#gold)"/><text x="710" y="207" fill="#fff7ed" font-family="Inter,Arial" font-size="19" font-weight="700">Popularity baseline</text><text x="710" y="233" fill="#fed7aa" font-family="Inter,Arial" font-size="14">Rank by positive counts</text></g>
+<g filter="url(#shadow)"><rect x="685" y="350" width="235" height="110" rx="18" fill="#2e1065" stroke="#c084fc" stroke-width="1.5"/><path d="M703 350H902Q920 350 920 368V374H685V368Q685 350 703 350Z" fill="url(#pink)"/><text x="710" y="407" fill="#faf5ff" font-family="Inter,Arial" font-size="19" font-weight="700">Content-based TF–IDF</text><text x="710" y="433" fill="#e9d5ff" font-family="Inter,Arial" font-size="14">Profile · cosine similarity</text></g>
+<path d="M920 205H965V280H990" stroke="#94a3b8" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/><path d="M920 405H965V330H990" stroke="#94a3b8" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+<!-- evaluation -->
+<g filter="url(#shadow)"><rect x="1000" y="245" width="320" height="125" rx="20" fill="#102b4c" stroke="#38bdf8" stroke-width="1.5"/><path d="M1020 245H1300Q1320 245 1320 265V270H1000V265Q1000 245 1020 245Z" fill="url(#cyan)"/><text x="1030" y="302" fill="#f0f9ff" font-family="Inter,Arial" font-size="20" font-weight="700">Top-5 evaluation</text><text x="1030" y="330" fill="#bae6fd" font-family="Inter,Arial" font-size="15">Hit Rate · Recall · MRR · NDCG</text><text x="1030" y="352" fill="#bae6fd" font-family="Inter,Arial" font-size="13">CSV metrics + comparison chart</text></g>
+<!-- synthetic branch -->
+<path d="M490 360V510H605" stroke="#fbbf24" stroke-width="2.5" stroke-dasharray="7 7" fill="none" marker-end="url(#arrowGold)"/>
+<g filter="url(#shadow)"><rect x="615" y="475" width="360" height="100" rx="18" fill="#3b2509" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="7 5"/><text x="642" y="512" fill="#fef3c7" font-family="Inter,Arial" font-size="19" font-weight="700">Synthetic Markov demo</text><text x="642" y="540" fill="#fde68a" font-family="Inter,Arial" font-size="14">Generated order only · not real-data results</text></g>
+<path d="M975 525H1010" stroke="#fbbf24" stroke-width="2.5" stroke-dasharray="7 7" fill="none" marker-end="url(#arrowGold)"/>
+<g><rect x="1020" y="490" width="300" height="70" rx="16" fill="#271d13" stroke="#fbbf24" stroke-width="1.2"/><text x="1045" y="520" fill="#fef3c7" font-family="Inter,Arial" font-size="16" font-weight="700">Transition matrix check</text><text x="1045" y="542" fill="#fde68a" font-family="Inter,Arial" font-size="13">Controlled demonstration</text></g>
+<text x="70" y="650" fill="#94a3b8" font-family="Inter,Arial" font-size="13">Research integrity note: reliable real-world Markov evaluation requires timestamped or ordered interactions.</text>
+</svg>

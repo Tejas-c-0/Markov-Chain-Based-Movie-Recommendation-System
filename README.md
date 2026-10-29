@@ -1,37 +1,146 @@
-# CineMark APSP — Group A11
-## Reproducible Python recommendation-system project
+<div align="center">
 
-CineMark is a movie recommendation research project for Applied Statistics & Stochastic Processes (APSP), CAT 2.
+<img src="assets/cinemark-architecture.svg" alt="CineMark — recommendation pipeline" width="100%" />
 
-This repository is designed so a group member or instructor can inspect the data-cleaning steps, run the models, reproduce the evaluation, and understand what the results do—and do not—show.
+# 🎬 CineMark
+### Markov Chain-Based Movie Recommendation System
 
-## 1. Project contents
+**A reproducible APSP research prototype for exploring movie recommendation, content similarity, ranking metrics, and Markov transitions.**
+
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Jupyter](https://img.shields.io/badge/Jupyter-Notebook-F37626?style=for-the-badge&logo=jupyter&logoColor=white)](https://jupyter.org/)
+[![scikit--learn](https://img.shields.io/badge/scikit--learn-TF--IDF-F7931E?style=for-the-badge&logo=scikitlearn&logoColor=white)](https://scikit-learn.org/)
+[![Research](https://img.shields.io/badge/Project-Research%20Prototype-8B5CF6?style=for-the-badge)](#-research-scope-and-limitations)
+
+**Course:** Applied Statistics & Stochastic Processes (APSP) · **Assessment:** CAT 2 · **Group:** A11
+
+[Overview](#-overview) · [How it works](#-how-it-works) · [Results](#-current-results) · [Run locally](#-run-locally) · [Limitations](#-research-scope-and-limitations)
+
+</div>
+
+---
+
+## ✨ Overview
+
+**CineMark** studies how movie metadata and user feedback can be used to rank movies a user may like. The notebook currently compares two recommendation baselines on the supplied feedback data:
+
+- **Popularity baseline** — ranks movies by positive feedback in the training set.
+- **Content-based TF–IDF** — represents movie metadata as text vectors and ranks unseen movies by similarity to a user's positive-history profile.
+- **Markov Chain demonstration** — uses a **synthetic, ordered sequence dataset** to demonstrate state transitions. It is not a real-data Markov evaluation because the supplied feedback has no reliable event timestamps or viewing order.
+
+> [!IMPORTANT]
+> The project is a research prototype, not a production recommendation service. The current real-data evaluation is a per-user held-out positive-item test. Markov results from generated sequences must be labelled **synthetic** and must not be presented as measured performance on real CineMark user histories.
+
+## 🧭 How it works
+
+The diagram below summarizes the pipeline implemented in the notebook. The large top-level flow is the real-feedback evaluation; the dashed lower branch is the separate synthetic Markov experiment.
+
+```mermaid
+flowchart TD
+    A[Movie metadata CSV] --> C[Validate and clean inputs]
+    B[Feedback JSON Lines] --> C
+    C --> D[Match movie IDs and parse labels]
+    D --> E[Per-user train/test holdout]
+    E --> F[Popularity baseline]
+    E --> G[Content-based TF-IDF]
+    F --> H[Top-5 ranking metrics]
+    G --> H
+    H --> I[CSV results and comparison chart]
+    J[Generated ordered sequences] -. synthetic only .-> K[Estimate Markov transitions]
+    K -. synthetic only .-> L[Compare with known transition matrix]
+    style A fill:#172554,stroke:#60a5fa,color:#fff
+    style B fill:#312e81,stroke:#a78bfa,color:#fff
+    style C fill:#0f766e,stroke:#5eead4,color:#fff
+    style E fill:#1e3a8a,stroke:#93c5fd,color:#fff
+    style F fill:#7c2d12,stroke:#fdba74,color:#fff
+    style G fill:#581c87,stroke:#d8b4fe,color:#fff
+    style H fill:#164e63,stroke:#67e8f9,color:#fff
+    style I fill:#14532d,stroke:#86efac,color:#fff
+    style J fill:#3f3f46,stroke:#a1a1aa,color:#fff
+    style K fill:#713f12,stroke:#fde047,color:#fff
+    style L fill:#713f12,stroke:#fde047,color:#fff
+```
+
+### 🔬 Recommendation logic
+
+| Stage | What happens | Why it matters |
+|---|---|---|
+| 1. Validate | Check expected columns, normalize IDs, parse feedback labels | Prevents malformed records from contaminating the experiment |
+| 2. Clean | Ignore non-movie form keys, remove duplicate user–movie pairs, drop feedback for unknown movie IDs | Aligns feedback with the movie catalogue |
+| 3. Split | Hold out one positive movie for each eligible user with at least two positive movies | Creates a repeatable top-N retrieval test |
+| 4. Recommend | Rank unseen movies with popularity counts or TF–IDF profile similarity | Provides two interpretable baselines |
+| 5. Evaluate | Calculate Hit Rate@5, Recall@5, MRR@5, and NDCG@5 | Measures whether the held-out movie is retrieved and how highly it ranks |
+| 6. Demonstrate Markov | Learn transitions from generated ordered sequences | Illustrates stochastic transitions without claiming unavailable real event order |
+
+## 📊 Current results
+
+These values are from the current `outputs/model_evaluation_results.csv` included with this project. The evaluation uses **731 test users** and one held-out positive target per user.
+
+| Model | Hit Rate@5 | Recall@5 | MRR@5 | NDCG@5 |
+|---|---:|---:|---:|---:|
+| Popularity baseline | **3.83%** | **3.83%** | **0.0152** | **0.0208** |
+| Content-based TF–IDF | **1.92%** | **1.92%** | **0.0102** | **0.0124** |
+
+**Interpretation:** In this particular split, the popularity baseline outperformed the content-based TF–IDF model on all four reported metrics. This does not prove popularity is generally superior; the result may change with different splits, data, preprocessing, or ranking methods.
+
+### What the metrics mean
+
+- **Hit Rate@5:** fraction of test users whose held-out positive movie appears among the five recommendations.
+- **Recall@5:** equals Hit Rate@5 in this setup because each test user has exactly one held-out positive target.
+- **MRR@5 (Mean Reciprocal Rank):** rewards recommendations that place the target closer to rank 1.
+- **NDCG@5 (Normalized Discounted Cumulative Gain):** rewards relevant items higher in the ranked list, applying a position-based discount.
+
+> Metrics describe this fixed evaluation run. Re-run the notebook after changing the data or random seed and update this section from the generated CSV rather than assuming the values stay the same.
+
+## 🧠 Markov Chain: what it means here
+
+A first-order Markov model estimates the next state using the current state:
+
+\[
+P(X_{t+1}=j\mid X_t=i)
+\]
+
+In a movie recommender, a state could represent a movie and a transition probability could represent how likely a user is to move from one movie to another. Estimating meaningful transitions requires **ordered interaction events**. The supplied feedback file has no reliable timestamp or viewing order, so the notebook uses generated sequences with a known transition structure for a controlled demonstration only.
+
+**Research next step:** obtain permission to use privacy-safe, timestamped interaction sequences, then evaluate next-item prediction chronologically against suitable baselines.
+
+## 🗂️ Repository structure
 
 ```text
 cinemark_apsp_group_a11/
-├── CineMark_APSP_Group_A11.ipynb
-├── README.md
-├── requirements.txt
+├── CineMark_APSP_Group_A11.ipynb   # Main analysis and experiments
+├── README.md                       # Project guide
+├── requirements.txt                # Python dependencies
+├── .gitignore
+├── assets/
+│   └── cinemark-architecture.svg   # Premium pipeline illustration
 ├── data/
-│   ├── movies.csv
-│   └── ratings.json
-└── outputs/                  # generated when notebook runs
+│   ├── movies.csv                  # Movie catalogue metadata
+│   └── ratings.json                # Feedback input (check privacy before publishing)
+└── outputs/
+    ├── data_quality_summary.csv
+    ├── model_evaluation_results.csv
+    ├── popularity_user_metrics.csv
+    ├── content_user_metrics.csv
+    ├── model_comparison.png
+    ├── synthetic_markov_simulation.csv
+    └── synthetic_markov_simulation.png
 ```
 
-Only the two files needed for modelling are included. User-profile files are intentionally excluded because they contain personal information and password fields.
+Generated output files may be refreshed when all notebook cells are run. The `ratings.json` file may contain persistent user identifiers; **do not publish it in a public repository unless the data owner has approved sharing and identifiers have been appropriately removed or transformed**. Do not upload profile exports, emails, passwords, password hashes, or other sensitive data.
 
-## 2. Requirements
+## ⚙️ Run locally
 
-- Python 3.10 or newer recommended
-- pip
-- Jupyter Notebook or JupyterLab
-- Internet is not required after Python packages are installed
+### 1. Clone the repository
 
-## 3. Setup
+```bash
+git clone https://github.com/Tejas-c-0/Markov-Chain-Based-Movie-Recommendation-System.git
+cd Markov-Chain-Based-Movie-Recommendation-System
+```
 
-Open a terminal in this project folder.
+### 2. Create a virtual environment
 
-### Windows (PowerShell)
+**Windows PowerShell**
 
 ```powershell
 py -m venv .venv
@@ -41,14 +150,7 @@ pip install -r requirements.txt
 jupyter notebook
 ```
 
-If PowerShell blocks activation, you can run the environment's Python directly:
-
-```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m notebook
-```
-
-### macOS / Linux
+**macOS / Linux**
 
 ```bash
 python3 -m venv .venv
@@ -58,127 +160,54 @@ pip install -r requirements.txt
 jupyter notebook
 ```
 
-In Jupyter, open `CineMark_APSP_Group_A11.ipynb` and choose **Kernel → Restart Kernel and Run All Cells**. Run all cells from top to bottom.
+### 3. Run the notebook
 
-## 4. Input data format
+Open `CineMark_APSP_Group_A11.ipynb`, then select **Kernel → Restart Kernel and Run All Cells**. Run cells from top to bottom. Confirm that the input files are present in `data/` and that the installed Python environment matches the notebook kernel.
 
-### `data/ratings.json`
+## 🧰 Technology stack
 
-This file uses JSON Lines (NDJSON): each non-empty line is a separate JSON object. A record resembles:
+- **Python** — experiment implementation
+- **Pandas / NumPy** — data processing and numerical operations
+- **scikit-learn** — TF–IDF vectorization and text similarity
+- **Matplotlib** — evaluation visualizations
+- **Jupyter Notebook** — reproducible, step-by-step analysis
+- **Markov Chain** — synthetic transition modelling demonstration
 
-```json
-{
-  "_id": "example-user-id",
-  "rated": {
-    "tt5286444": ["1"],
-    "tt4434004": ["0"],
-    "submit": ["submit"]
-  }
-}
-```
+## 🔐 Data handling
 
-The notebook:
-- uses `_id` only as an internal join key,
-- reads movie feedback from `rated`,
-- ignores non-movie keys such as `submit`,
-- accepts only labels `-1`, `0`, and `1`,
-- removes duplicate user–movie pairs,
-- removes feedback whose movie ID is absent from the catalogue.
+- Use only the minimum fields required for the analysis.
+- Keep user-profile exports and credentials out of the repository.
+- Review `git status` before every public commit.
+- If the feedback data is not approved for public redistribution, keep it local and document how an authorized reviewer can obtain it.
+- Do not expose user identifiers in screenshots, reports, charts, or notebook output.
 
-Interpretation for this experiment:
-- `1` = positive feedback,
-- `0` = neutral/unspecified (not automatically a dislike),
-- `-1` = negative feedback.
+## ⚠️ Research scope and limitations
 
-### `data/movies.csv`
+1. **No real chronological sequence:** the feedback data has no reliable timestamp or event order, so real-data Markov next-item performance cannot be measured from this file alone.
+2. **Single holdout split:** the reported metrics may be sensitive to the split. Repeated seeded splits or user-level cross-validation would provide stronger evidence.
+3. **One target per test user:** Hit Rate@5 and Recall@5 are equal under the current evaluation design.
+4. **Sparse feedback:** many movies may have little or no user feedback.
+5. **Neutral labels:** label `0` is treated as neutral/unspecified, not automatically as a dislike; `-1` is negative and `1` is positive.
+6. **Metadata quality:** missing or noisy genres, descriptions, cast, or director fields may reduce content similarity quality.
+7. **Prototype, not deployment:** this notebook does not implement a production API, online learning, or a live user interface.
 
-Expected columns include `movie_id`, `name`, `description`, `genre`, `language`, `cast`, `director`, and `writer`. The notebook checks the required columns and builds text features from available movie metadata.
+## 🧪 Reproducibility checklist
 
-## 5. Pipeline: how it works
+- [ ] Use the approved versions of `movies.csv` and feedback data.
+- [ ] Install dependencies from `requirements.txt`.
+- [ ] Restart the kernel and run every notebook cell in order.
+- [ ] Confirm the generated model-comparison CSV matches the reported metrics.
+- [ ] Keep the synthetic Markov experiment clearly labelled as synthetic.
+- [ ] Check that no personal data or credentials are staged for GitHub.
 
-### Step A — Inspect and clean
-The notebook checks input files, normalizes IDs, parses labels, drops non-movie form keys, removes duplicate pairs, and matches feedback IDs against the movie catalogue.
+## 👥 Academic context
 
-### Step B — Split into training and test data
-The supplied feedback does not contain a reliable viewing timestamp or event order. The notebook therefore uses a **per-user random holdout of one positive movie** for each user with at least two positive movies. Remaining positive movies are training examples.
+**CineMark — Group A11** · Applied Statistics & Stochastic Processes (APSP), CAT 2.
 
-This is a valid simple retrieval test, but it is not a chronological “predict the next movie” test. The notebook uses a fixed random seed for repeatability.
+This repository is intended for academic demonstration and reproducible experimentation. Cite the original data source and document any permissions or preprocessing requirements before external or publication use.
 
-### Step C — Popularity baseline
-Count positive training feedback per movie and rank movies by that count. Exclude movies already present in each user's training history.
+<div align="center">
 
-### Step D — Content-based TF–IDF
-Combine movie text fields into one document per movie. TF–IDF converts the text into numeric vectors. For each user, average vectors for their training-positive movies to form a profile. Rank unseen movies by similarity to that profile.
+**Built for learning, tested with metrics, documented with research integrity.** 🎞️
 
-### Step E — Evaluate
-For each test user, check whether their hidden positive movie appears in the top five recommendations.
-
-- **Hit Rate@5:** share of users whose held-out movie is in the top five.
-- **Recall@5:** equals Hit Rate@5 here because each user has one hidden positive target.
-- **MRR@5:** rewards a hit more when it appears near rank 1.
-- **NDCG@5:** rewards higher-ranked hits with a logarithmic discount.
-
-All popularity counts and user profiles are built from training data only, reducing test leakage.
-
-### Step F — Synthetic Markov Chain simulation
-A Markov Chain estimates the next item from the current item. To learn and test it correctly, the model needs an ordered sequence of events. The supplied ratings file does not provide reliable timestamps or viewing order.
-
-The notebook therefore generates **synthetic sequences** with a deliberately defined transition matrix. It compares a Markov recommender with a popularity baseline and measures how close the learned transition matrix is to the known synthetic matrix.
-
-**Never report synthetic Markov scores as real CineMark results.** The simulation validates the basic idea under controlled conditions; it does not establish real-world performance.
-
-## 6. Outputs
-
-After a successful run, the notebook creates the following files in `outputs/`:
-
-| File | Purpose |
-|---|---|
-| `data_quality_summary.csv` | Cleaning and dataset counts |
-| `model_evaluation_results.csv` | Main model comparison metrics |
-| `popularity_user_metrics.csv` | Per-user popularity evaluation |
-| `content_user_metrics.csv` | Per-user content evaluation |
-| `model_comparison.png` | Real-data model comparison chart |
-| `synthetic_markov_simulation.csv` | Synthetic Markov simulation measurements |
-| `synthetic_markov_simulation.png` | Synthetic-only chart |
-
-Use the values generated by the notebook for the final report. Results can change if the seed, data, or preprocessing changes.
-
-## 7. Privacy and safe handling
-
-The supplied user-profile JSON/CSV files contain sensitive fields such as emails, dates of birth, and password values or password hashes. They are not needed for this model and are deliberately not copied into this project.
-
-- Do not upload user-profile files to a public Git repository.
-- Do not include personal user IDs in public screenshots or the report.
-- Use pseudonymous IDs and only the minimum fields required for research.
-- If the supplied profile file is real and its passwords were exposed, notify the data owner and rotate any affected credentials.
-
-## 8. Limitations to explain during the review
-
-1. **No real sequential evaluation:** timestamps or reliable viewing order are missing.
-2. **One holdout split:** results may vary with a different split; repeated splits or cross-validation would provide a stronger comparison.
-3. **One hidden positive target per test user:** Hit Rate@5 and Recall@5 are equal under this setup.
-4. **Sparse feedback:** many catalogue movies may have little or no feedback.
-5. **Label meaning:** the notebook treats `0` as neutral/unspecified, not as a dislike.
-6. **Metadata quality:** missing or noisy descriptions and cast/genre fields can weaken TF–IDF recommendations.
-7. **Catalogue rating is not user feedback:** the movie metadata rating is not used as the recommendation target.
-
-## 9. What to say to the instructor
-
-> “CineMark recommends movies using the feedback labels in our dataset. We cleaned the movie IDs and labels, then compared a popularity baseline with a content-based model using movie descriptions and metadata. We evaluated both with a per-user holdout and top-five ranking metrics. The dataset has no reliable viewing timestamps, so we did not claim a real-data Markov result. Instead, we tested the Markov logic on synthetic sequences, where the event order is known. The next step is to collect timestamped, privacy-safe user events and evaluate Markov on future interactions.”
-
-## 10. Troubleshooting
-
-- **FileNotFoundError:** confirm `data/movies.csv` and `data/ratings.json` exist beside the notebook in the `data/` directory.
-- **Missing package:** activate the virtual environment and run `pip install -r requirements.txt`.
-- **Notebook uses the wrong Python:** in Jupyter, select the kernel from the environment where requirements were installed.
-- **Different results:** confirm the same data files and `RANDOM_SEED = 42` are being used.
-- **Large output or slow run:** the content similarity computation is manageable for the supplied 2,850-movie catalogue. Avoid adding unnecessary user-profile columns.
-
-## 11. Reproducibility checklist
-
-- [ ] Use only `movies.csv` and `ratings.json` as model inputs.
-- [ ] Install packages from `requirements.txt`.
-- [ ] Restart the kernel and run every cell in order.
-- [ ] Confirm both real-data models have metric rows.
-- [ ] Keep synthetic Markov results labelled as synthetic.
-- [ ] Attach the generated CSVs/charts or copy their measured values into the report.
+</div>
